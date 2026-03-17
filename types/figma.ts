@@ -159,13 +159,16 @@ export interface DesignNode {
 
 export interface DesignTokens {
   colors: Record<string, string>;
-  typography: Record<string, {
-    fontFamily: string;
-    fontSize: string;
-    fontWeight: number;
-    lineHeight: string;
-    letterSpacing: string;
-  }>;
+  typography: Record<
+    string,
+    {
+      fontFamily: string;
+      fontSize: string;
+      fontWeight: number;
+      lineHeight: string;
+      letterSpacing: string;
+    }
+  >;
   spacing: string[];
 }
 

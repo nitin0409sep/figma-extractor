@@ -1,4 +1,4 @@
-import { FigmaNode, FigmaColor, FigmaPaint, CSSMapping } from "@/types/figma";
+import { CSSMapping, FigmaColor, FigmaNode, FigmaPaint } from "@/types/figma";
 
 function colorToRgba(color: FigmaColor, opacity?: number): string {
   const r = Math.round(color.r * 255);
@@ -12,9 +12,15 @@ function colorToRgba(color: FigmaColor, opacity?: number): string {
 }
 
 export function colorToHex(color: FigmaColor): string {
-  const r = Math.round(color.r * 255).toString(16).padStart(2, "0");
-  const g = Math.round(color.g * 255).toString(16).padStart(2, "0");
-  const b = Math.round(color.b * 255).toString(16).padStart(2, "0");
+  const r = Math.round(color.r * 255)
+    .toString(16)
+    .padStart(2, "0");
+  const g = Math.round(color.g * 255)
+    .toString(16)
+    .padStart(2, "0");
+  const b = Math.round(color.b * 255)
+    .toString(16)
+    .padStart(2, "0");
   return `#${r}${g}${b}`;
 }
 
@@ -80,13 +86,20 @@ function mapTypography(style: {
   return css;
 }
 
-function mapEffects(effects: { type: string; visible?: boolean; color?: FigmaColor; offset?: { x: number; y: number }; radius: number; spread?: number }[]): CSSMapping {
+function mapEffects(
+  effects: {
+    type: string;
+    visible?: boolean;
+    color?: FigmaColor;
+    offset?: { x: number; y: number };
+    radius: number;
+    spread?: number;
+  }[],
+): CSSMapping {
   const css: CSSMapping = {};
   const visible = effects.filter((e) => e.visible !== false);
 
-  const shadows = visible.filter(
-    (e) => e.type === "DROP_SHADOW" || e.type === "INNER_SHADOW"
-  );
+  const shadows = visible.filter((e) => e.type === "DROP_SHADOW" || e.type === "INNER_SHADOW");
   if (shadows.length > 0) {
     css["box-shadow"] = shadows
       .map((s) => {
@@ -102,7 +115,7 @@ function mapEffects(effects: { type: string; visible?: boolean; color?: FigmaCol
 
   const blurs = visible.filter((e) => e.type === "LAYER_BLUR");
   if (blurs.length > 0) {
-    css["filter"] = `blur(${blurs[0].radius}px)`;
+    css.filter = `blur(${blurs[0].radius}px)`;
   }
 
   const bgBlurs = visible.filter((e) => e.type === "BACKGROUND_BLUR");
@@ -118,16 +131,16 @@ function mapLayout(node: FigmaNode): CSSMapping {
   const box = node.absoluteBoundingBox;
 
   if (box) {
-    css["width"] = `${box.width}px`;
-    css["height"] = `${box.height}px`;
+    css.width = `${box.width}px`;
+    css.height = `${box.height}px`;
   }
 
   if (node.layoutMode && node.layoutMode !== "NONE") {
-    css["display"] = "flex";
+    css.display = "flex";
     css["flex-direction"] = node.layoutMode === "HORIZONTAL" ? "row" : "column";
 
     if (node.itemSpacing) {
-      css["gap"] = `${node.itemSpacing}px`;
+      css.gap = `${node.itemSpacing}px`;
     }
 
     const justifyMap: Record<string, string> = {
@@ -157,9 +170,9 @@ function mapLayout(node: FigmaNode): CSSMapping {
   const pl = node.paddingLeft ?? 0;
   if (pt || pr || pb || pl) {
     if (pt === pr && pr === pb && pb === pl) {
-      css["padding"] = `${pt}px`;
+      css.padding = `${pt}px`;
     } else {
-      css["padding"] = `${pt}px ${pr}px ${pb}px ${pl}px`;
+      css.padding = `${pt}px ${pr}px ${pb}px ${pl}px`;
     }
   }
 
@@ -173,16 +186,16 @@ function mapLayout(node: FigmaNode): CSSMapping {
   if (node.strokes && node.strokes.length > 0 && node.strokeWeight) {
     const stroke = node.strokes.find((s) => s.visible !== false);
     if (stroke?.color) {
-      css["border"] = `${node.strokeWeight}px solid ${colorToRgba(stroke.color)}`;
+      css.border = `${node.strokeWeight}px solid ${colorToRgba(stroke.color)}`;
     }
   }
 
   if (node.opacity !== undefined && node.opacity < 1) {
-    css["opacity"] = String(node.opacity);
+    css.opacity = String(node.opacity);
   }
 
   if (node.clipsContent) {
-    css["overflow"] = "hidden";
+    css.overflow = "hidden";
   }
 
   return css;

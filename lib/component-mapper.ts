@@ -34,7 +34,8 @@ function inferSemanticTag(node: FigmaNode): string {
   // Interactive
   if (name.includes("button") || name.includes("btn") || name.includes("cta")) return "button";
   if (name.includes("link")) return "a";
-  if (name.includes("input") || name.includes("field") || name.includes("textfield")) return "input";
+  if (name.includes("input") || name.includes("field") || name.includes("textfield"))
+    return "input";
   if (name.includes("textarea")) return "textarea";
   if (name.includes("select") || name.includes("dropdown")) return "select";
   if (name.includes("checkbox")) return "input";
@@ -52,7 +53,13 @@ function inferSemanticTag(node: FigmaNode): string {
   }
 
   // Media
-  if (name.includes("image") || name.includes("img") || name.includes("photo") || name.includes("avatar")) return "img";
+  if (
+    name.includes("image") ||
+    name.includes("img") ||
+    name.includes("photo") ||
+    name.includes("avatar")
+  )
+    return "img";
   if (name.includes("icon")) return "svg";
   if (name.includes("video")) return "video";
 
@@ -77,30 +84,30 @@ function toComponentName(name: string): string {
 
 export function generateComponentSuggestion(
   node: FigmaNode,
-  tailwindClasses: string
+  tailwindClasses: string,
 ): ComponentSuggestion {
   const tag = inferSemanticTag(node);
   const isComponent = node.type === "COMPONENT" || node.type === "INSTANCE";
 
   const props: Record<string, string> = {};
   if (tailwindClasses) {
-    props["className"] = tailwindClasses;
+    props.className = tailwindClasses;
   }
 
   if (tag === "img") {
-    props["src"] = "";
-    props["alt"] = node.name;
+    props.src = "";
+    props.alt = node.name;
   }
   if (tag === "a") {
-    props["href"] = "#";
+    props.href = "#";
   }
   if (tag === "input") {
     if (node.name.toLowerCase().includes("checkbox")) {
-      props["type"] = "checkbox";
+      props.type = "checkbox";
     } else if (node.name.toLowerCase().includes("radio")) {
-      props["type"] = "radio";
+      props.type = "radio";
     } else {
-      props["type"] = "text";
+      props.type = "text";
     }
   }
 
@@ -113,7 +120,7 @@ export function generateComponentSuggestion(
 }
 
 export function buildComponentTree(
-  nodes: { id: string; name: string; type: string; componentSuggestion: ComponentSuggestion }[]
+  nodes: { id: string; name: string; type: string; componentSuggestion: ComponentSuggestion }[],
 ): Record<string, string> {
   const components: Record<string, string> = {};
 

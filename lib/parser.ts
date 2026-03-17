@@ -1,14 +1,14 @@
 import {
-  FigmaNode,
-  FigmaFileResponse,
-  FigmaNodesResponse,
   DesignNode,
   DesignTokens,
   ExtractedDesign,
+  FigmaFileResponse,
+  FigmaNode,
+  FigmaNodesResponse,
 } from "@/types/figma";
-import { generateCSS, colorToHex } from "./css-mapper";
+import { buildComponentTree, generateComponentSuggestion } from "./component-mapper";
+import { colorToHex, generateCSS } from "./css-mapper";
 import { generateTailwind } from "./tailwind-mapper";
-import { generateComponentSuggestion, buildComponentTree } from "./component-mapper";
 
 function parseNode(node: FigmaNode): DesignNode {
   const css = generateCSS(node);
@@ -20,7 +20,7 @@ function parseNode(node: FigmaNode): DesignNode {
       const r = Math.round(visibleFill.color.r * 255);
       const g = Math.round(visibleFill.color.g * 255);
       const b = Math.round(visibleFill.color.b * 255);
-      css["color"] = `rgb(${r}, ${g}, ${b})`;
+      css.color = `rgb(${r}, ${g}, ${b})`;
       // Remove background-color for text nodes — fills become text color
       delete css["background-color"];
     }
@@ -80,9 +80,7 @@ function parseNode(node: FigmaNode): DesignNode {
   }
 
   if (node.children) {
-    designNode.children = node.children
-      .filter((child) => child.visible !== false)
-      .map(parseNode);
+    designNode.children = node.children.filter((child) => child.visible !== false).map(parseNode);
   }
 
   return designNode;
@@ -149,9 +147,7 @@ function collectTokens(nodes: DesignNode[]): DesignTokens {
   return {
     colors: colorRecord,
     typography: typoRecord,
-    spacing: Array.from(spacingSet).sort(
-      (a, b) => parseFloat(a) - parseFloat(b)
-    ),
+    spacing: Array.from(spacingSet).sort((a, b) => parseFloat(a) - parseFloat(b)),
   };
 }
 
@@ -168,22 +164,19 @@ function collectAllNodes(nodes: DesignNode[]): DesignNode[] {
 export function parseDesignFromNodes(
   fileKey: string,
   data: FigmaNodesResponse,
-  nodeId: string
+  _nodeId: string,
 ): ExtractedDesign {
   const nodeEntries = Object.values(data.nodes);
   const nodes = nodeEntries
     .filter((entry) => entry.document)
-    .map((entry) => {
+    .flatMap((entry) => {
       const doc = entry.document;
       // If the node has children, parse those; otherwise parse the node itself
       if (doc.children && doc.children.length > 0) {
-        return doc.children
-          .filter((child) => child.visible !== false)
-          .map(parseNode);
+        return doc.children.filter((child) => child.visible !== false).map(parseNode);
       }
       return [parseNode(doc)];
-    })
-    .flat();
+    });
 
   const designTokens = collectTokens(nodes);
   const allNodes = collectAllNodes(nodes);
@@ -199,18 +192,13 @@ export function parseDesignFromNodes(
   };
 }
 
-export function parseDesign(
-  fileKey: string,
-  data: FigmaFileResponse
-): ExtractedDesign {
+export function parseDesign(fileKey: string, data: FigmaFileResponse): ExtractedDesign {
   const doc = data.document;
 
   // Figma files have a DOCUMENT root with PAGE children; parse children of each page
   const pages = doc.children ?? [];
   const nodes = pages.flatMap((page) =>
-    (page.children ?? [])
-      .filter((child) => child.visible !== false)
-      .map(parseNode)
+    (page.children ?? []).filter((child) => child.visible !== false).map(parseNode),
   );
 
   const designTokens = collectTokens(nodes);

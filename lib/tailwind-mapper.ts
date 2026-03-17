@@ -1,5 +1,4 @@
-import { CSSMapping, FigmaColor } from "@/types/figma";
-import { colorToHex } from "./css-mapper";
+import { CSSMapping } from "@/types/figma";
 
 const SPACING_MAP: Record<number, string> = {
   0: "0",
@@ -109,19 +108,14 @@ function closestBorderRadius(px: number): string {
   return `rounded-[${px}px]`;
 }
 
-function colorToTailwindClass(
-  prefix: string,
-  colorStr: string
-): string {
+function colorToTailwindClass(prefix: string, colorStr: string): string {
   // For rgba/rgb colors, use arbitrary value with hex
-  const rgbMatch = colorStr.match(
-    /rgba?\((\d+),\s*(\d+),\s*(\d+)/
-  );
+  const rgbMatch = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
   if (rgbMatch) {
     const hex =
       "#" +
       [rgbMatch[1], rgbMatch[2], rgbMatch[3]]
-        .map((c) => parseInt(c).toString(16).padStart(2, "0"))
+        .map((c) => parseInt(c, 10).toString(16).padStart(2, "0"))
         .join("");
     return `${prefix}-[${hex}]`;
   }
@@ -136,7 +130,7 @@ export function generateTailwind(css: CSSMapping): string {
   const classes: string[] = [];
 
   // Display + flex
-  if (css["display"] === "flex") {
+  if (css.display === "flex") {
     classes.push("flex");
     if (css["flex-direction"] === "column") classes.push("flex-col");
     // row is default, no class needed
@@ -166,26 +160,26 @@ export function generateTailwind(css: CSSMapping): string {
   }
 
   // Gap
-  if (css["gap"]) {
-    const px = parsePx(css["gap"]);
+  if (css.gap) {
+    const px = parsePx(css.gap);
     classes.push(`gap-${closestSpacing(px)}`);
   }
 
   // Width/Height
-  if (css["width"]) {
-    const px = parsePx(css["width"]);
+  if (css.width) {
+    const px = parsePx(css.width);
     const sp = closestSpacing(px);
     classes.push(sp.startsWith("[") ? `w-${sp}` : `w-${sp}`);
   }
-  if (css["height"]) {
-    const px = parsePx(css["height"]);
+  if (css.height) {
+    const px = parsePx(css.height);
     const sp = closestSpacing(px);
     classes.push(sp.startsWith("[") ? `h-${sp}` : `h-${sp}`);
   }
 
   // Padding
-  if (css["padding"]) {
-    const parts = css["padding"].split(" ").map((p) => parsePx(p));
+  if (css.padding) {
+    const parts = css.padding.split(" ").map((p) => parsePx(p));
     if (parts.length === 1) {
       classes.push(`p-${closestSpacing(parts[0])}`);
     } else if (parts.length === 4) {
@@ -218,10 +212,10 @@ export function generateTailwind(css: CSSMapping): string {
   }
 
   // Border
-  if (css["border"]) {
-    const match = css["border"].match(/(\d+)px solid (.+)/);
+  if (css.border) {
+    const match = css.border.match(/(\d+)px solid (.+)/);
     if (match) {
-      const width = parseInt(match[1]);
+      const width = parseInt(match[1], 10);
       if (width === 1) classes.push("border");
       else classes.push(`border-${width}`);
       classes.push(colorToTailwindClass("border", match[2]));
@@ -235,7 +229,7 @@ export function generateTailwind(css: CSSMapping): string {
     classes.push(mapped ? `text-${mapped}` : `text-[${px}px]`);
   }
   if (css["font-weight"]) {
-    const w = parseInt(css["font-weight"]);
+    const w = parseInt(css["font-weight"], 10);
     const mapped = FONT_WEIGHT_MAP[w];
     classes.push(mapped ? `font-${mapped}` : `font-[${w}]`);
   }
@@ -254,8 +248,8 @@ export function generateTailwind(css: CSSMapping): string {
   if (css["text-transform"] === "lowercase") classes.push("lowercase");
 
   // Color (text color from fills applied on TEXT nodes)
-  if (css["color"]) {
-    classes.push(colorToTailwindClass("text", css["color"]));
+  if (css.color) {
+    classes.push(colorToTailwindClass("text", css.color));
   }
 
   // Shadow
@@ -265,8 +259,8 @@ export function generateTailwind(css: CSSMapping): string {
   }
 
   // Blur
-  if (css["filter"]) {
-    const match = css["filter"].match(/blur\((\d+)px\)/);
+  if (css.filter) {
+    const match = css.filter.match(/blur\((\d+)px\)/);
     if (match) classes.push(`blur-[${match[1]}px]`);
   }
   if (css["backdrop-filter"]) {
@@ -275,13 +269,13 @@ export function generateTailwind(css: CSSMapping): string {
   }
 
   // Opacity
-  if (css["opacity"]) {
-    const val = Math.round(parseFloat(css["opacity"]) * 100);
+  if (css.opacity) {
+    const val = Math.round(parseFloat(css.opacity) * 100);
     classes.push(`opacity-${val}`);
   }
 
   // Overflow
-  if (css["overflow"] === "hidden") classes.push("overflow-hidden");
+  if (css.overflow === "hidden") classes.push("overflow-hidden");
 
   return classes.join(" ");
 }
