@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseFigmaUrl, fetchFile } from "@/lib/figma-client";
-import { parseDesign } from "@/lib/parser";
+import { parseFigmaUrl, fetchFile, fetchFileNodes } from "@/lib/figma-client";
+import { parseDesign, parseDesignFromNodes } from "@/lib/parser";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +14,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Figma Personal Access Token is required." }, { status: 400 });
     }
 
-    const { fileKey } = parseFigmaUrl(url);
+    const { fileKey, nodeId } = parseFigmaUrl(url);
+
+    if (nodeId) {
+      // Fetch only the specific node(s) for better performance and targeting
+      const nodesData = await fetchFileNodes(fileKey, [nodeId], token);
+      const result = parseDesignFromNodes(fileKey, nodesData, nodeId);
+      return NextResponse.json(result);
+    }
+
     const fileData = await fetchFile(fileKey, token);
     const result = parseDesign(fileKey, fileData);
 

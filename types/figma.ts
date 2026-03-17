@@ -109,6 +109,12 @@ export interface FigmaFileResponse {
   styles: Record<string, { key: string; name: string; styleType: string; description: string }>;
 }
 
+export interface FigmaNodesResponse {
+  name: string;
+  lastModified: string;
+  nodes: Record<string, { document: FigmaNode }>;
+}
+
 // Output types
 
 export interface CSSMapping {

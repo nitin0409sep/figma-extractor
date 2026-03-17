@@ -1,6 +1,7 @@
 import {
   FigmaNode,
   FigmaFileResponse,
+  FigmaNodesResponse,
   DesignNode,
   DesignTokens,
   ExtractedDesign,
@@ -162,6 +163,40 @@ function collectAllNodes(nodes: DesignNode[]): DesignNode[] {
   }
   for (const n of nodes) walk(n);
   return all;
+}
+
+export function parseDesignFromNodes(
+  fileKey: string,
+  data: FigmaNodesResponse,
+  nodeId: string
+): ExtractedDesign {
+  const nodeEntries = Object.values(data.nodes);
+  const nodes = nodeEntries
+    .filter((entry) => entry.document)
+    .map((entry) => {
+      const doc = entry.document;
+      // If the node has children, parse those; otherwise parse the node itself
+      if (doc.children && doc.children.length > 0) {
+        return doc.children
+          .filter((child) => child.visible !== false)
+          .map(parseNode);
+      }
+      return [parseNode(doc)];
+    })
+    .flat();
+
+  const designTokens = collectTokens(nodes);
+  const allNodes = collectAllNodes(nodes);
+  const componentTree = buildComponentTree(allNodes);
+
+  return {
+    fileKey,
+    fileName: data.name,
+    lastModified: data.lastModified,
+    nodes,
+    designTokens,
+    componentTree,
+  };
 }
 
 export function parseDesign(
